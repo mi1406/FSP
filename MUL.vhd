@@ -15,7 +15,7 @@ architecture BEHAVIOUR of MUL is
 
 begin
 MULT :  process(CLK)
-variable TMP : signed(3* W - 1 downto 0);
+variable TMP : signed(3* W - 1 downto 0) := (others => '0');
 begin
 if rising_edge(CLK) then
     TMP := X * Y;
