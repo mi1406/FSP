@@ -82,9 +82,10 @@ begin
 
 	if rising_edge(CLK) then
 		if SRESETN = '0' then
-			AUDIO_REG_L <= (others=>'0');
+			--AUDIO_REG_L <= (others=>'0');
 			AUDIO_REG_R <= (others => '0');AUDIO_REG_MONO <= (others=>'0'); AUDIO_REG_TMP <= (others=>'0');
 		else
+	FIR_EN <= '0';
 			if START_L='1' then
 				AUDIO_REG_TMP <= signed(AUDIO_IN_L);
  			elsif START_R = '1' then
@@ -118,7 +119,7 @@ end process;
 write_back : process(CLK)
 -- asynchronous assignment from register to output
 variable counter_sin : integer range 0 to 47 := 24;
-variable counter_cos : integer range 0 to 47:= 36;
+variable counter_cos : integer range 0 to 47:= 12; --36;
 variable tmp_reg : signed(W -1 downto 0);
 variable tmp_reg1 : signed(W -1 downto 0);
 begin

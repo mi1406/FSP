@@ -29,11 +29,11 @@ signal PROD_L : std_logic_vector(2*W - 1 downto 0);
 signal PROD_R : std_logic_vector(2*W - 1 downto 0);
 
 begin
-MUL_LEFT : MUL port map(CLK => CLK, X => SIN, Y => XN, YN => PROD_L);
-MUL_RIGHT : MUL port map(CLK => CLK, X => COS, Y => X_FILTERED, YN => PROD_R);
+MUL_LEFT : MUL port map(CLK => CLK, X => COS, Y => XN, YN => PROD_L);
+MUL_RIGHT : MUL port map(CLK => CLK, X => SIN, Y => X_FILTERED, YN => PROD_R);
 
 SUM : process(CLK)
-variable tmp : signed(2 * W - 1 downto 0);
+variable tmp : signed(2 * W - 1 downto 0) := (others => '0');
 begin
 if rising_edge(CLK) then
     tmp := signed(PROD_L) + signed(PROD_R);
