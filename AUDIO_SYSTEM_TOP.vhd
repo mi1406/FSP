@@ -16,6 +16,9 @@ entity AUDIO_SYSTEM_TOP is
 		-- serial data in
 		DIN: in std_logic;
 		-- serial data out
+		IOM_SW0			: in std_logic;
+		IOM_SW1			: in std_logic;
+		IOM_SW2			: in std_logic;
 		DOUT: out std_logic
 		);
 end AUDIO_SYSTEM_TOP;
@@ -50,6 +53,9 @@ component AUDIO_PROCESSING
 		AUDIO_IN_R		: in std_logic_vector(W-1 downto 0);
 		START_L			: in std_logic;
 		START_R			: in std_logic;
+		IOM_SW0			: in std_logic;
+		IOM_SW1			: in std_logic;
+		IOM_SW2			: in std_logic;
 		AUDIO_OUT_L		: out std_logic_vector(W-1 downto 0);
 		AUDIO_OUT_R		: out std_logic_vector(W-1 downto 0)
 	);
@@ -59,11 +65,12 @@ signal AUDIO_PAR_IN_L, AUDIO_PAR_IN_R, AUDIO_PAR_OUT_L, AUDIO_PAR_OUT_R : std_lo
 signal START_L, START_R : std_logic;
 
 begin
+
 INST_AUDIO_CODEC_COM : AUDIO_CODEC_COM
 	port map (CLK,SRESETN,SYSCLK,BCK,LRC,DIN,AUDIO_PAR_IN_L,AUDIO_PAR_IN_R,START_L,START_R,AUDIO_PAR_OUT_L,AUDIO_PAR_OUT_R,DOUT);
 
 INST_AUDIO_PROCESSING : AUDIO_PROCESSING 
     port map(CLK,SRESETN,
-	         AUDIO_PAR_IN_L,AUDIO_PAR_IN_R,START_L,START_R,AUDIO_PAR_OUT_L,AUDIO_PAR_OUT_R);
+	         AUDIO_PAR_IN_L,AUDIO_PAR_IN_R,START_L,START_R,IOM_SW0, IOM_SW1, IOM_SW2, AUDIO_PAR_OUT_L,AUDIO_PAR_OUT_R);
 		
 end COMPONENTS;

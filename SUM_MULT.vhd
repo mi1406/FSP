@@ -39,7 +39,7 @@ if rising_edge(CLK) then
     tmp := signed(PROD_L) + signed(PROD_R);
     --if tmp'length >= W then
 	--	report integer'image(tmp'length) severity failure;
-    YN <= std_logic_vector(tmp(tmp'length - 1 downto tmp'length - (2 * W)));
+    YN <= std_logic_vector(tmp*2);--std_logic_vector(tmp(tmp'length - 1 downto tmp'length - (2 * W)));
   --  else 
  --       YN <= std_logic_vector(tmp);
  --   end if;

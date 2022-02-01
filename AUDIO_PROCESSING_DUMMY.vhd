@@ -13,8 +13,11 @@ entity AUDIO_PROCESSING is
 		SRESETN				: in std_logic;
 		AUDIO_IN_L			: in std_logic_vector(W-1 downto 0);
 		AUDIO_IN_R			: in std_logic_vector(W-1 downto 0);
-		START_L				    : in std_logic;
-		START_R	          		  : in std_logic;
+		START_L				: in std_logic;
+		START_R	          		: in std_logic;
+		IOM_SW0				: in std_logic;
+		IOM_SW1				: in std_logic;
+		IOM_SW2				: in std_logic;
 		AUDIO_OUT_L			: out std_logic_vector(W-1 downto 0);
 		AUDIO_OUT_R			: out std_logic_vector(W-1 downto 0)
 	);
@@ -71,6 +74,10 @@ signal buf : signed(myWidth - 1 downto 0);
 signal debug_enter : std_logic;
 signal SIN : signed(myWidth - 1 downto 0);
 signal COS : signed(myWidth - 1 downto 0);
+signal index: integer range 0 to 3;
+signal guard : integer range 0 to 47;
+--signal counter_sin : integer range 0 to 50; --<= 24;
+--signal counter_cos : integer range 0 to 50;-- <= 12;
 --signal minusOne : signed( )
 begin 
 
@@ -83,13 +90,15 @@ begin
 	if rising_edge(CLK) then
 		if SRESETN = '0' then
 			--AUDIO_REG_L <= (others=>'0');
-			AUDIO_REG_R <= (others => '0');AUDIO_REG_MONO <= (others=>'0'); AUDIO_REG_TMP <= (others=>'0');
+			AUDIO_REG_R <= (others => '0');
+			AUDIO_REG_MONO <= (others=>'0');
+			AUDIO_REG_TMP <= (others=>'0');
 		else
 	FIR_EN <= '0';
 			if START_L='1' then
 				AUDIO_REG_TMP <= signed(AUDIO_IN_L);
  			elsif START_R = '1' then
-				AUDIO_REG_MONO <= AUDIO_REG_TMP + signed(AUDIO_IN_R);
+				AUDIO_REG_MONO <=(AUDIO_REG_TMP/2 + signed(AUDIO_IN_R)/2); --shift_right(AUDIO_REG_TMP + signed(AUDIO_IN_R),1);
 				FIR_EN <= '1';
 			
 			end if;
@@ -117,35 +126,59 @@ end process;
 
 
 write_back : process(CLK)
--- asynchronous assignment from register to output
-variable counter_sin : integer range 0 to 47 := 24;
-variable counter_cos : integer range 0 to 47:= 12; --36;
+-- asynchronous assignment from register to outputindex
+
 variable tmp_reg : signed(W -1 downto 0);
 variable tmp_reg1 : signed(W -1 downto 0);
+variable counter_sin : integer range 0 to 50; --<= 24;
+variable counter_cos : integer range 0 to 50;-- <= 12;
 begin
 	--FIR_EN <= '0';
 if rising_edge(CLK) then
+if (IOM_SW0 xor IOM_SW1 xor IOM_SW2 ) = '0' then
+counter_sin := 24;
+counter_cos := 12;
+end if;
 	if START_R = '1' then
 	--AUDIO_REG_L
 	--tmp_reg := resize(sum * sinLUT(counter_sin), 16);
 	--tmp_reg1 := resize((DELAY_LINE(sizeOfDelay)* sinLUT(counter_cos)), 16);
+
 	SIN <=  sinLUT(counter_sin);
 	COS <= sinLUT(counter_cos);
 --	 AUDIO_REG_L<= tmp_reg + tmp_reg1;--resize((sum * sinLUT(counter_sin) + (DELAY_LINE(sizeOfDelay)* sinLUT(counter_cos))), 16); -- delay line index needs to be 63?
 --	AUDIO_OUT_R <= std_logic_vector(tmp_reg);--resize((sum * sinLUT(counter_sin) + (DELAY_LINE(sizeOfDelay)* sinLUT(counter_cos))), 16); -- delay line index needs to be 63?
-	if counter_sin = 47 then
+	if counter_sin >= guard then
 		counter_sin := 0;
 	else 
-		counter_sin := counter_sin + 1;
+		counter_sin := counter_sin + index;
 	end if;
-	if counter_cos = 47 then
-	counter_cos := 0;
+	if counter_cos >= guard then
+		counter_cos := 0;
 	else 
-	counter_cos := counter_cos +  1;
+		counter_cos := counter_cos +  index;
 	end if;
-	end if;
-end if;
 
+end if; --end START_R if
+end if;
+end process;
+
+switch_freq :process(CLK)
+begin
+if rising_edge(CLK) then
+index <= 0;
+guard <= 0;
+if IOM_SW0 = '1' then
+index <= 1;
+guard <= 47;
+elsif IOM_SW1 = '1' then
+index <= 2;
+guard <= 46;
+elsif IOM_SW2 = '1' then 
+index <= 3;
+guard <= 45;
+end if;
+end if;
 end process;
 
 latch_out: process(AUDIO_REG_L)
